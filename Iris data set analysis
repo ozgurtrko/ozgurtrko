@@ -1,0 +1,210 @@
+library(stats)
+library(datasets)
+install.packages("Hmisc")
+install.packages("corrplot")
+install.packages("PerformanceAnalytics")
+install.packages("ggpubr")
+library(ggplot2)
+data("iris")
+data1 <- head(iris)
+summary(iris)
+str(iris)
+
+boxplot(iris, las = 2)
+
+
+###Bitki türleri (Species) arasında sepal uzunluğu (Sepal.Length) açısından 
+#istatistiksel olarak anlamlı bir fark var mı?
+#HO: Anlamlı bir fark yoktur.
+#H1: Anlamlı bir fark vardır.
+boxplot(Sepal.Length ~ Species, data = iris)
+model1 <- aov(Sepal.Length ~ Species, data = iris)
+model1
+summary(model1)
+
+alpha <- 0.05
+p_value <- summary(model1)[[1]]$`Pr(>F)`[1] 
+if (p_value < alpha) {
+  cat("Bitki türleri arasında sepal uzunluğu açısından anlamlı bir fark vardır.
+      Reject H0")
+} else {
+  cat("Bitki türleri arasında sepal uzunluğu açısından anlamlı bir fark yoktur.
+      Can not reject H0")
+}
+
+###Bitki türleri (Species) arasında sepal uzunluğu (Sepal.Length) ve 
+#petal uzunluğu (Petal.Length) arasında bir korelasyon var mı?
+correlation <- cor(iris$Sepal.Length, iris$Petal.Length)
+correlation
+plot(iris$Sepal.Length, iris$Petal.Length,
+     xlab = "Sepal Length", ylab = "Petal Length",
+     main = "Sepal Length and Petal Length Correlation Graph")
+abline(lm(iris$Petal.Length ~ iris$Sepal.Length), col = "red")
+
+# 0.8717538. Bu değer türler arasında sepal uzunluğu ve petal uzunluğu arasında pozitif bir 
+#ilişki olduğunu gösterir.
+
+###
+# H0: The mean sepal length is equal to 5.0
+# H1: The mean sepal length is not equal to 5.0
+mu <- 5
+result <- t.test(iris$Sepal.Length, mu = mu)
+result
+
+
+###
+# H0: The mean Petal.Length of setosa and versicolor species is equal.
+# H1: The mean Petal.Length of setosa and versicolor species is not equal.
+
+setosa <- iris$Petal.Length[iris$Species == "setosa"]
+versicolor <- iris$Petal.Length[iris$Species == "versicolor"]
+virginica <- iris$Petal.Length[iris$Species == "virginica"]
+
+result <- t.test(setosa, versicolor)
+result2 <- t.test(setosa, virginica)
+result3 <- t.test(virginica, versicolor)
+
+result
+result2
+result3
+
+###Is there a correlation between Sepal.Width and Petal.Width?
+
+par(mfrow = c(1,1))
+cor1 <- cor(iris$Sepal.Width, iris$Petal.Width)
+cor1
+plot(iris$Sepal.Width, iris$Petal.Width,
+     xlab = "Sepal Width", ylab = "Petal Width",
+     main = "Sepal width and Petal Width Correlation Graph")
+
+abline(lm(iris$Petal.Width ~ iris$Sepal.Width), col = "red")
+##There is a negative relationship between petal length and sepal length.
+
+
+
+
+##Bitki türlerine göre özellik dağılımları
+par(mfrow = c(2,2))
+boxplot(Petal.Length ~ Species, data = iris,
+        main = "Petal Length Dist. by Species",
+        xlab = "Species", ylab = "Petal Length")
+
+boxplot(Petal.Width ~ Species, data = iris,
+        main = "Petal width Dist. by Species",
+        xlab = "Species", ylab = "Petal Width")
+boxplot(Sepal.Length ~ Species, data = iris,
+        main = "Sepal Length Dist. by Species",
+        xlab = "Species", ylab = "Sepal Length")
+
+boxplot(Sepal.Width ~ Species, data = iris,
+        main = "Sepal Width Dist. by Species",
+        xlab = "Species", ylab = "Sepal Width")
+
+## Özellik analizi
+### Özellikler arasındaki ilişkiyi gösteren korelasyon matrisi
+str(iris)
+cor_matrix <- cor(iris[, 1:4])
+cor_matrix
+plot(cor_matrix)
+library(ggplot2)
+library(reshape2)
+
+melted_cor <- melt(cor_matrix)
+ggplot(data = melted_cor, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile()+
+  scale_fill_gradient2(low = "black", mid = "darkslategray1", high = "gray31",
+                       midpoint = 0, limit = c(-1,1))+
+  theme_minimal()+
+  labs(x = "",y = "")+
+  ggtitle("Heat Map of Correlation Matrix")
+### Özelliklerin dağılım histogramı
+
+par(mfrow = c(2,2))
+hist(iris$Sepal.Length, main = "Sepal Length", xlab = "Length ",col = "blue")
+hist(iris$Sepal.Width, main = "Sepal Width", xlab = "Width",col = "red")
+hist(iris$Petal.Length, main = "Petal Length", xlab = "Length", col = "green")
+hist(iris$Petal.Width, main = "Petal Width", xlab = "Width", col = "yellow")
+## Outliers
+par(mfrow = c(1,1))
+boxplot(iris[, 1:4], main = "Feature Dist.", xlab = "Features")
+
+### Bitki türlerine göre özelliklerin ortalama değerleri
+
+mean_by_species <- aggregate(iris[, 1:4], by = list(iris$Species), FUN = mean)
+
+plot(mean_by_species[,1], type = "b", pch = 19, ylim = c(0,8),
+     xlab = "Species", ylab = "Mean Value", main = "Mean Values of Iris Features")
+points(mean_by_species[,2], type ="b",pch = 19, col = "hotpink")
+points(mean_by_species[,3], type ="b",pch = 19, col = "slateblue1")
+points(mean_by_species[,4],type = "b", pch =19, col = "springgreen2")
+legend("topleft",legend = colnames(mean_by_species)[2,4], col = c("red","blue","green"),pch = 19)
+
+
+
+
+
+
+data(iris)
+##Null Hypothesis (H0): The proportion of Iris Setosa flowers in the population is equal to 0.5.
+##Alternative Hypothesis (H1): The proportion of Iris Setosa flowers in the population is greater than 0.5.
+
+setosa_count <- sum(iris$Species == "setosa")
+
+# Calculate the population proportion of Iris Setosa flowers
+setosa_proportion <- setosa_count / nrow(iris)
+
+# Perform a one-sample proportion test
+prop.test(setosa_proportion,n = setosa_count,
+          alternative = "greater",
+          conf.level = 0.95)
+
+versicolor_count <- sum(iris$Species == "versicolor")
+versicolor_prop <- versicolor_count / nrow(iris)
+prop.test(versicolor_prop, n = versicolor_count,
+          alternative = "greater",
+          conf.level = 0.95)
+versicolor_count
+virginica_count <- sum(iris$Species == "virginica")
+virginica_prop <- virginica_count / nrow(iris)
+prop.test(virginica_prop, n = virginica_count,
+          alternative = "greater",
+          conf.level = 0.95)
+setosa_count
+
+
+
+prop.test(c(setosa_prop, versicolor_prop),
+          alternative = "two.sided",
+          n = c(50,50),
+          conf.level = 0.95)
+
+c(setosa_count, versicolor_count)
+length(c(setosa_count, versicolor_count))
+
+
+
+
+lm1 <- lm(species ~ Sepal.Length)
+
+
+?scatter.smooth
+
+
+
+# Load the Iris dataset
+data(iris)
+
+# Create a scatter plot of Petal.Length and Petal.Width
+plot(Petal.Length ~ Petal.Width, data = iris)
+
+# Add a legend to the scatter plot
+legend("bottomright", legend = levels(iris$Species), col = c("red", "blue", "green"))
+
+# Load the Iris dataset
+data(iris)
+
+# Load the Iris dataset
+data(iris)
+
+# Create a scatter plot matrix of Petal.Length and Petal.Width
+pairs(iris[, -5], col = iris$Species)
